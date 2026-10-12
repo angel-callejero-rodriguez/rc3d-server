@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RC3D Server Viewer</title>
     
-    <!-- OBRIGATÓRIO: O motor do Google que faz o 3D funcionar -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
     <style>
@@ -19,14 +18,14 @@
             font-family: Arial, sans-serif;
         }
 
+        /* ALTERAÇÃO AQUI: Começa visível (display: block) */
         model-viewer {
             width: 100%;
             height: 100%;
             outline: none;
-            display: none; /* Escondido até sabermos se o ficheiro existe */
+            display: block; 
         }
 
-        /* Mensagem de Erro Centralizada */
         #mensagem-erro {
             display: flex;
             flex-direction: column;
@@ -45,13 +44,13 @@
 </head>
 <body>
 
-    <!-- A MENSAGEM DE ERRO SE O CLIENTE NÃO PAGAR -->
     <div id="mensagem-erro">
         <h2>Serviço Indisponível</h2>
         <p>O modelo 3D não foi encontrado ou o serviço foi suspenso.</p>
     </div>
 
-    <!-- O VISUALIZADOR 3D -->
+    <!-- VISUALIZADOR COM UMA COR DE FUNDO TEMPORÁRIA -->
+    <!-- (Adicionada uma cor cinzenta #eee para veres que o motor está a funcionar) -->
     <model-viewer 
         id="leitor-3d" 
         src="" 
@@ -59,10 +58,10 @@
         ar-modes="webxr scene-viewer quick-look" 
         camera-controls 
         shadow-intensity="1.5" 
-        auto-rotate>
+        auto-rotate
+        style="background-color: #eeeeee;">
     </model-viewer>
 
-    <!-- O CÉREBRO QUE CARREGA O FICHEIRO CERTO -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const nomeDoFicheiro = urlParams.get('modelo');
@@ -70,23 +69,20 @@
         const erro = document.getElementById('mensagem-erro');
 
         if (nomeDoFicheiro) {
-            // Se houver um nome de ficheiro no link, injeta no src
+            
             leitor.src = nomeDoFicheiro;
             
-            // Ouve o evento de erro nativo do model-viewer. 
-            // Se o src falhar (ex: ficheiro não existe/apagado), mostra erro.
+            // Se der erro ao carregar (ex: apagas o ficheiro), esconde o leitor e mostra o erro
             leitor.addEventListener('error', () => {
                 leitor.style.display = 'none';
                 erro.style.display = 'flex';
             });
 
-            // Se carregar com sucesso, mostra o leitor
-            leitor.addEventListener('load', () => {
-                leitor.style.display = 'block';
-            });
+            // Apaguei a condição 'load' que estava a encravar o ecrã. O leitor trata de si mesmo agora.
 
         } else {
-            // Se alguém abrir o link sem "?modelo=...", mostra o erro logo
+            // Se o link vier sem "?modelo=", bloqueia logo.
+            leitor.style.display = 'none';
             erro.style.display = 'flex';
         }
     </script>
