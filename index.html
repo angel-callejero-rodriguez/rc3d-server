@@ -1,40 +1,94 @@
-<style>
-    /* A página fantasma não tem margens nem fundo, para ficar invisível no site do cliente */
-    body, html {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: transparent;
-    }
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RC3D Server Viewer</title>
     
-    model-viewer {
-        width: 100%;
-        height: 100%;
-        outline: none;
-    }
-</style>
-<!-- O motor começa vazio. O JavaScript vai preenchê-lo. -->
-<model-viewer 
-    id="leitor-3d" 
-    src="" 
-    ar 
-    ar-modes="webxr scene-viewer quick-look" 
-    camera-controls 
-    shadow-intensity="1.5" 
-    auto-rotate>
-</model-viewer>
+    <!-- OBRIGATÓRIO: O motor do Google que faz o 3D funcionar -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
-<script>
-    // Esta lógica "pesca" a palavra que vem a seguir a "?modelo=" no link
-    const urlParams = new URLSearchParams(window.location.search);
-    const nomeDoFicheiro = urlParams.get('modelo');
-    
-    // Se encontrar o nome, injeta-o no leitor 3D
-    if(nomeDoFicheiro) {
-        document.getElementById('leitor-3d').src = nomeDoFicheiro;
-    } else {
-        console.error("Nenhum modelo especificado no link.");
-    }
-</script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: transparent;
+            font-family: Arial, sans-serif;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            outline: none;
+            display: none; /* Escondido até sabermos se o ficheiro existe */
+        }
+
+        /* Mensagem de Erro Centralizada */
+        #mensagem-erro {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background-color: #f8f9fa;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            display: none; /* Escondido por defeito */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- A MENSAGEM DE ERRO SE O CLIENTE NÃO PAGAR -->
+    <div id="mensagem-erro">
+        <h2>Serviço Indisponível</h2>
+        <p>O modelo 3D não foi encontrado ou o serviço foi suspenso.</p>
+    </div>
+
+    <!-- O VISUALIZADOR 3D -->
+    <model-viewer 
+        id="leitor-3d" 
+        src="" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        shadow-intensity="1.5" 
+        auto-rotate>
+    </model-viewer>
+
+    <!-- O CÉREBRO QUE CARREGA O FICHEIRO CERTO -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const nomeDoFicheiro = urlParams.get('modelo');
+        const leitor = document.getElementById('leitor-3d');
+        const erro = document.getElementById('mensagem-erro');
+
+        if (nomeDoFicheiro) {
+            // Se houver um nome de ficheiro no link, injeta no src
+            leitor.src = nomeDoFicheiro;
+            
+            // Ouve o evento de erro nativo do model-viewer. 
+            // Se o src falhar (ex: ficheiro não existe/apagado), mostra erro.
+            leitor.addEventListener('error', () => {
+                leitor.style.display = 'none';
+                erro.style.display = 'flex';
+            });
+
+            // Se carregar com sucesso, mostra o leitor
+            leitor.addEventListener('load', () => {
+                leitor.style.display = 'block';
+            });
+
+        } else {
+            // Se alguém abrir o link sem "?modelo=...", mostra o erro logo
+            erro.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
