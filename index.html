@@ -7,84 +7,172 @@
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: transparent;
-            font-family: Arial, sans-serif;
-        }
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: transparent;
+        font-family: Arial, sans-serif;
+    }
 
-        /* ALTERAÇÃO AQUI: Começa visível (display: block) */
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            outline: none;
-            display: block; 
-        }
+    /* O Leitor 3D ocupa 100% da janela */
+    model-viewer {
+        width: 100%;
+        height: 100%;
+        outline: none;
+        display: block; 
+        background-color: #eeeeee; /* Cor de fundo para sabermos que está a carregar */
+    }
 
-        #mensagem-erro {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100%;
-            background-color: #f8f9fa;
-            color: #333;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-            display: none; /* Escondido por defeito */
-        }
-    </style>
-</head>
-<body>
+    /* A mensagem vermelha se o cliente não pagar ou modelo não existir */
+    #mensagem-erro {
+        display: none; /* Escondido por defeito */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        background-color: #fff0f0;
+        color: #d8000c;
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
 
-    <div id="mensagem-erro">
-        <h2>Serviço Indisponível</h2>
-        <p>O modelo 3D não foi encontrado ou o serviço foi suspenso.</p>
+    /* Botão para PC (QR Code) */
+    #btn-qr-pc {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background-color: #111;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 100;
+        display: none; /* Escondido até sabermos se é PC */
+    }
+
+    /* Janela Pop-up do QR Code */
+    #qr-popup {
+        display: none; /* Escondido por defeito */
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.9);
+        z-index: 200;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .qr-box {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        max-width: 80%;
+    }
+
+    .qr-box img {
+        margin: 15px 0;
+        width: 150px;
+        height: 150px;
+    }
+
+    .fechar-qr {
+        background: none;
+        border: none;
+        color: #666;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+</style>
+
+
+<!-- MENSAGEM DE ERRO -->
+<div id="mensagem-erro">
+    <h2>Serviço Indisponível</h2>
+    <p>O modelo 3D não foi encontrado ou o serviço encontra-se inativo.</p>
+</div>
+
+<!-- O VISUALIZADOR 3D -->
+<model-viewer 
+    id="leitor-3d" 
+    src="" 
+    ar 
+    ar-modes="webxr scene-viewer quick-look" 
+    camera-controls 
+    shadow-intensity="1.5" 
+    auto-rotate>
+</model-viewer>
+
+<!-- BOTÃO PARA PC -->
+<button id="btn-qr-pc">Ver no Smartphone (QR)</button>
+
+<!-- POP-UP DO QR CODE -->
+<div id="qr-popup">
+    <div class="qr-box">
+        <h3 style="margin: 0 0 10px 0; color: #111;">Visualizar na sua sala</h3>
+        <p style="margin: 0; font-size: 14px; color: #555;">Aponte a câmara do telemóvel:</p>
+        <img id="qr-image" src="" alt="QR Code">
+        <br>
+        <button class="fechar-qr" id="btn-fechar-qr">✖ Fechar</button>
     </div>
+</div>
 
-    <!-- VISUALIZADOR COM UMA COR DE FUNDO TEMPORÁRIA -->
-    <!-- (Adicionada uma cor cinzenta #eee para veres que o motor está a funcionar) -->
-    <model-viewer 
-        id="leitor-3d" 
-        src="" 
-        ar 
-        ar-modes="webxr scene-viewer quick-look" 
-        camera-controls 
-        shadow-intensity="1.5" 
-        auto-rotate
-        style="background-color: #eeeeee;">
-    </model-viewer>
+<!-- SCRIPT (LÓGICA) -->
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const nomeDoFicheiro = urlParams.get('modelo');
+    const leitor = document.getElementById('leitor-3d');
+    const erro = document.getElementById('mensagem-erro');
+    
+    const btnQrPc = document.getElementById('btn-qr-pc');
+    const qrPopup = document.getElementById('qr-popup');
+    const btnFecharQr = document.getElementById('btn-fechar-qr');
+    const qrImage = document.getElementById('qr-image');
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const nomeDoFicheiro = urlParams.get('modelo');
-        const leitor = document.getElementById('leitor-3d');
-        const erro = document.getElementById('mensagem-erro');
+    // 1. Verifica se é telemóvel ou PC
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // Se for PC, mostramos o botão QR
+    if (!isMobile) {
+        btnQrPc.style.display = 'block';
+    }
 
-        if (nomeDoFicheiro) {
-            
-            leitor.src = nomeDoFicheiro;
-            
-            // Se der erro ao carregar (ex: apagas o ficheiro), esconde o leitor e mostra o erro
-            leitor.addEventListener('error', () => {
-                leitor.style.display = 'none';
-                erro.style.display = 'flex';
-            });
-
-            // Apaguei a condição 'load' que estava a encravar o ecrã. O leitor trata de si mesmo agora.
-
-        } else {
-            // Se o link vier sem "?modelo=", bloqueia logo.
+    // 2. Carrega o modelo
+    if (nomeDoFicheiro) {
+        leitor.src = nomeDoFicheiro;
+        
+        leitor.addEventListener('error', () => {
             leitor.style.display = 'none';
+            btnQrPc.style.display = 'none';
             erro.style.display = 'flex';
-        }
-    </script>
+        });
+    } else {
+        leitor.style.display = 'none';
+        btnQrPc.style.display = 'none';
+        erro.style.display = 'flex';
+    }
+
+    // 3. Botões do QR
+    btnQrPc.addEventListener('click', () => {
+        const linkAtual = window.location.href;
+        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(linkAtual)}`;
+        qrPopup.style.display = 'flex';
+    });
+
+    btnFecharQr.addEventListener('click', () => {
+        qrPopup.style.display = 'none';
+    });
+</script>
+
 </body>
 </html>
