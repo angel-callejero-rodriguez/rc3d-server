@@ -1,0 +1,40 @@
+<style>
+    /* A página fantasma não tem margens nem fundo, para ficar invisível no site do cliente */
+    body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: transparent;
+    }
+    
+    model-viewer {
+        width: 100%;
+        height: 100%;
+        outline: none;
+    }
+</style>
+<!-- O motor começa vazio. O JavaScript vai preenchê-lo. -->
+<model-viewer 
+    id="leitor-3d" 
+    src="" 
+    ar 
+    ar-modes="webxr scene-viewer quick-look" 
+    camera-controls 
+    shadow-intensity="1.5" 
+    auto-rotate>
+</model-viewer>
+
+<script>
+    // Esta lógica "pesca" a palavra que vem a seguir a "?modelo=" no link
+    const urlParams = new URLSearchParams(window.location.search);
+    const nomeDoFicheiro = urlParams.get('modelo');
+    
+    // Se encontrar o nome, injeta-o no leitor 3D
+    if(nomeDoFicheiro) {
+        document.getElementById('leitor-3d').src = nomeDoFicheiro;
+    } else {
+        console.error("Nenhum modelo especificado no link.");
+    }
+</script>
