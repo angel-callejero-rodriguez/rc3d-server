@@ -1,0 +1,15 @@
+{
+  "name": "rc3d-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node --test && node scripts/build.mjs"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

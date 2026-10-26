@@ -1,0 +1,32 @@
+{
+  "atelier": {
+    "src": "/atelier.glb",
+    "name": "Poltrona em couro e madeira",
+    "credit": "Mid Century Lounge Chair — Kuutti Siitonen / Poly Haven, CC0"
+  },
+  "lounge": {
+    "src": "/lounge.glb",
+    "name": "Poltrona em veludo",
+    "credit": "Sheen Chair — Eric Chadwick / Wayfair, CC0"
+  },
+  "mesa": {
+    "src": "/mesa.glb",
+    "name": "Mesa circular",
+    "credit": "Modelo de demonstração Reality Concept"
+  },
+  "mesa-redonda": {
+    "src": "/mesa-redonda.glb",
+    "name": "Mesa em pedra e metal",
+    "credit": "Coffee Table Round 01 — Ulan Cabanilla / Poly Haven, CC0"
+  },
+  "cadeira": {
+    "src": "/cadeira.glb",
+    "name": "Cadeira de escritório",
+    "credit": "Office Chair Modern — thethieme, CC BY 4.0"
+  },
+  "cadeiracouro": {
+    "src": "/cadeiracouro.glb",
+    "name": "Cadeira de couro",
+    "credit": "Modelo de demonstração Reality Concept"
+  }
+}

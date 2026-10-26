@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
     <title>RC3D Server Viewer</title>
-    
+
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
 <style>
@@ -23,11 +24,11 @@
         width: 100%;
         height: 100%;
         outline: none;
-        display: block; 
+        display: none; /* Aparece quando o modelo é encontrado no registo */
         background-color: #eeeeee; /* Cor de fundo para sabermos que está a carregar */
     }
 
-    /* A mensagem vermelha se o cliente não pagar ou modelo não existir */
+    /* A mensagem vermelha se o modelo não existir ou estiver desativado */
     #mensagem-erro {
         display: none; /* Escondido por defeito */
         flex-direction: column;
@@ -40,6 +41,33 @@
         text-align: center;
         padding: 20px;
         box-sizing: border-box;
+    }
+
+    /* Crédito do modelo (licenças CC BY obrigam a mostrar o autor) */
+    #credito {
+        position: absolute;
+        left: 16px;
+        bottom: 16px;
+        max-width: 55%;
+        margin: 0;
+        font-size: 11px;
+        color: #666;
+        z-index: 100;
+    }
+
+    /* Link para abrir fora da iframe (alternativa se o AR não abrir dentro do site do cliente) */
+    #abrir-fora {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 12px;
+        color: #111;
+        background: rgba(255, 255, 255, 0.85);
+        padding: 6px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        z-index: 100;
+        display: none; /* Só aparece dentro de uma iframe */
     }
 
     /* Botão para PC (QR Code) */
@@ -94,24 +122,29 @@
         margin-top: 10px;
     }
 </style>
-
+</head>
+<body>
 
 <!-- MENSAGEM DE ERRO -->
-<div id="mensagem-erro">
+<div id="mensagem-erro" role="alert">
     <h2>Serviço Indisponível</h2>
     <p>O modelo 3D não foi encontrado ou o serviço encontra-se inativo.</p>
 </div>
 
 <!-- O VISUALIZADOR 3D -->
-<model-viewer 
-    id="leitor-3d" 
-    src="" 
-    ar 
-    ar-modes="webxr scene-viewer quick-look" 
-    camera-controls 
-    shadow-intensity="1.5" 
+<!-- ar-scale="fixed": o móvel aparece no tamanho real e não pode ser esticado em AR -->
+<model-viewer
+    id="leitor-3d"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    ar-scale="fixed"
+    camera-controls
+    shadow-intensity="1.5"
     auto-rotate>
 </model-viewer>
+
+<p id="credito"></p>
+<a id="abrir-fora" target="_blank" rel="noopener">Abrir em ecrã inteiro</a>
 
 <!-- BOTÃO PARA PC -->
 <button id="btn-qr-pc">Ver no Smartphone (QR)</button>
@@ -128,44 +161,67 @@
 </div>
 
 <!-- SCRIPT (LÓGICA) -->
-<script>
+<script type="module">
+    import { resolveModel, qrTarget } from "./resolve.js";
+
     const urlParams = new URLSearchParams(window.location.search);
-    const nomeDoFicheiro = urlParams.get('modelo');
     const leitor = document.getElementById('leitor-3d');
     const erro = document.getElementById('mensagem-erro');
-    
+    const credito = document.getElementById('credito');
+    const abrirFora = document.getElementById('abrir-fora');
+
     const btnQrPc = document.getElementById('btn-qr-pc');
     const qrPopup = document.getElementById('qr-popup');
     const btnFecharQr = document.getElementById('btn-fechar-qr');
     const qrImage = document.getElementById('qr-image');
 
-    // 1. Verifica se é telemóvel ou PC
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // Se for PC, mostramos o botão QR
-    if (!isMobile) {
-        btnQrPc.style.display = 'block';
-    }
+    // 1. Telemóvel ou PC? (o iPad moderno diz que é um Mac, por isso contamos os toques)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-    // 2. Carrega o modelo
-    if (nomeDoFicheiro) {
-        leitor.src = nomeDoFicheiro;
-        
-        leitor.addEventListener('error', () => {
-            leitor.style.display = 'none';
-            btnQrPc.style.display = 'none';
-            erro.style.display = 'flex';
-        });
-    } else {
+    function mostrarErro() {
         leitor.style.display = 'none';
         btnQrPc.style.display = 'none';
+        abrirFora.style.display = 'none';
+        credito.textContent = '';
         erro.style.display = 'flex';
     }
 
-    // 3. Botões do QR
+    // Lê um JSON do próprio servidor; devolve null se não existir.
+    async function fetchJson(path) {
+        try {
+            const resposta = await fetch(path, { cache: 'no-cache' });
+            return resposta.ok ? await resposta.json() : null;
+        } catch {
+            return null;
+        }
+    }
+
+    // 2. Procura o modelo no registo (só modelos registados podem ser mostrados)
+    const modelo = await resolveModel(urlParams.get('modelo'), fetchJson);
+
+    if (!modelo) {
+        mostrarErro();
+    } else {
+        leitor.addEventListener('error', mostrarErro);
+        leitor.alt = modelo.name ? `Modelo 3D — ${modelo.name}` : 'Modelo 3D';
+        leitor.src = modelo.src;
+        leitor.style.display = 'block';
+        credito.textContent = modelo.credit;
+
+        if (!isMobile) btnQrPc.style.display = 'block';
+
+        // Dentro de uma iframe (site do cliente): link para abrir o visualizador sozinho
+        if (window.self !== window.top) {
+            abrirFora.href = window.location.href;
+            abrirFora.style.display = 'block';
+        }
+    }
+
+    // 3. Botões do QR (gerado pelo nosso próprio servidor, em /api/qr)
     btnQrPc.addEventListener('click', () => {
-        const linkAtual = window.location.href;
-        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(linkAtual)}`;
+        const destino = qrTarget(urlParams.get('qr'), window.location.href);
+        qrImage.src = `/api/qr?data=${encodeURIComponent(destino)}`;
         qrPopup.style.display = 'flex';
     });
 
