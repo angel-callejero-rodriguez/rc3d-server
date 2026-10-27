@@ -72,6 +72,24 @@ test("todas as entradas do registo real apontam para ficheiros que existem", () 
   }
 });
 
+test("todas as demos (d/<token>.json) estão completas e apontam para modelos que existem", () => {
+  const demoDir = join(root, "d");
+  if (!existsSync(demoDir)) return;
+  const publicIds = Object.keys(readJson("models.json"));
+  for (const file of readdirSync(demoDir).filter((f) => f.endsWith(".json"))) {
+    const token = file.replace(/\.json$/, "");
+    const demo = readJson(join("d", file));
+    assert.match(token, /^[a-f0-9]{16}$/, `token inválido: ${token}`);
+    assert.ok(typeof demo.store === "string" && demo.store, `falta store em ${token}`);
+    assert.ok(typeof demo.product === "string" && demo.product, `falta product em ${token}`);
+    const exists = publicIds.includes(demo.model) || existsSync(join(root, "m", `${demo.model}.json`));
+    assert.ok(exists, `a demo ${token} aponta para um modelo que não existe: ${demo.model}`);
+    for (const row of demo.compare ?? []) {
+      assert.ok(row.label && row.before && row.after, `linha compare incompleta em ${token}`);
+    }
+  }
+});
+
 test("QR só aceita links https dos nossos sites", () => {
   assert.equal(allowedQrData("https://realityconcept3d.com/demo/abc"), "https://realityconcept3d.com/demo/abc");
   assert.equal(allowedQrData("https://ar.realityconcept3d.com/?modelo=mesa"), "https://ar.realityconcept3d.com/?modelo=mesa");

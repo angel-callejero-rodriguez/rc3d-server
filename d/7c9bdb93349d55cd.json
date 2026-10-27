@@ -1,0 +1,27 @@
+{
+  "store": "Larforma",
+  "product": "Lilly Armchair",
+  "model": "3c5cc4dae922fd36",
+  "compare": [
+    {
+      "label": "Tamanho do ficheiro",
+      "before": "4,0 MB",
+      "after": "1,7 MB"
+    },
+    {
+      "label": "Memória gráfica no telemóvel",
+      "before": "≈ 270 MB",
+      "after": "≈ 67 MB"
+    },
+    {
+      "label": "Tamanho no AR",
+      "before": "pode ser esticado",
+      "after": "fixo, tamanho real (76 × 79 × 85 cm)"
+    },
+    {
+      "label": "Alojamento do modelo",
+      "before": "GitHub (cache de 5 min)",
+      "after": "servidor 3D dedicado"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "store": "Larforma",
+  "product": "Botero Chair",
+  "model": "2c938f3f79931cb9",
+  "compare": [
+    {
+      "label": "Tamanho do ficheiro",
+      "before": "25,9 MB",
+      "after": "3,4 MB"
+    },
+    {
+      "label": "Memória gráfica no telemóvel",
+      "before": "≈ 390 MB",
+      "after": "≈ 134 MB"
+    },
+    {
+      "label": "Tamanho no AR",
+      "before": "pode ser esticado",
+      "after": "fixo, tamanho real (60 × 70 × 80 cm)"
+    },
+    {
+      "label": "Alojamento do modelo",
+      "before": "GitHub (cache de 5 min)",
+      "after": "servidor 3D dedicado"
+    }
+  ]
+}

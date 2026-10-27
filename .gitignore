@@ -1,2 +1,5 @@
 node_modules/
 dist/
+tools/node_modules/
+tools/.env
+tools/out/

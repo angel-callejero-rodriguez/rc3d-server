@@ -15,6 +15,8 @@ for (const file of PUBLIC_FILES) cpSync(join(root, file), join(dist, file));
 for (const file of readdirSync(root)) {
   if (file.endsWith(".glb")) cpSync(join(root, file), join(dist, file));
 }
-if (existsSync(join(root, "m"))) cpSync(join(root, "m"), join(dist, "m"), { recursive: true });
+for (const dir of ["m", "d"]) {
+  if (existsSync(join(root, dir))) cpSync(join(root, dir), join(dist, dir), { recursive: true });
+}
 
 console.log(`dist/ pronto: ${readdirSync(dist).length} entradas`);
