@@ -4,6 +4,10 @@
   "type": "module",
   "description": "Ferramentas locais: preparar demos a partir da lista de leads e criar rascunhos na Zoho. Não é publicado.",
   "devDependencies": {
-    "@gltf-transform/cli": "^4.2.0"
+    "@gltf-transform/cli": "^4.2.0",
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "draco3dgltf": "^1.5.9"
   }
 }
