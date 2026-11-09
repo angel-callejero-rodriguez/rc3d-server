@@ -50,7 +50,8 @@ Uma linha só é processada quando tem `ficheiro_glb`, `email` e `peca`, e ainda
 
 ## Regras que a ferramenta cumpre
 
-- Texturas reduzidas para 2048 px no máximo e geometria em Draco. A forma e a escala não mudam.
+- Modelos com menos de 9 MB ficam como estão: não se sacrifica qualidade.
+- Acima de 9 MB: texturas reduzidas para 2048 px no máximo e geometria em Draco. A forma e a escala não mudam.
 - Para marcas com 3D, os números "antes/depois" são medidos nos ficheiros, não inventados.
 - Mede as medidas do modelo (L × P × A). **Confirma-as com a página do produto antes de enviar.**
 - Ids e tokens são aleatórios; nada fica listado publicamente.

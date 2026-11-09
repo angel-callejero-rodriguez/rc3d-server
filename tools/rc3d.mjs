@@ -29,6 +29,8 @@ const COLUMNS = [
 ];
 const yes = (v) => /^s(im)?$/i.test((v || "").trim());
 const MAX_TEXTURE = 2048;
+// Abaixo disto o modelo já é leve: fica como está, sem reduzir texturas nem comprimir a geometria.
+const KEEP_QUALITY_BYTES = 9e6;
 
 const hex = () => randomBytes(8).toString("hex");
 const mb = (bytes) => (bytes / 1e6).toFixed(1).replace(".", ",");
@@ -99,9 +101,14 @@ async function optimizeGlb(lead) {
 
   const resized = join(work, `${id}-resized.glb`);
   const target = join(SERVER, "m", `${id}.glb`);
-  if (before.maxRes > MAX_TEXTURE) gltf(["resize", cleaned, resized, "--width", String(MAX_TEXTURE), "--height", String(MAX_TEXTURE)]);
-  else copyFileSync(cleaned, resized);
-  gltf(["optimize", resized, target, "--compress", "draco", "--texture-compress", "false", "--simplify", "false"]);
+  if (statSync(cleaned).size < KEEP_QUALITY_BYTES) {
+    copyFileSync(cleaned, target);
+    console.log(`  (menos de 9 MB: modelo mantido sem compressão)`);
+  } else {
+    if (before.maxRes > MAX_TEXTURE) gltf(["resize", cleaned, resized, "--width", String(MAX_TEXTURE), "--height", String(MAX_TEXTURE)]);
+    else copyFileSync(cleaned, resized);
+    gltf(["optimize", resized, target, "--compress", "draco", "--texture-compress", "false", "--simplify", "false"]);
+  }
 
   const hasOwn3d = /^sim/i.test(lead["tem 3D no site"] || "");
   const credit = lead.credito?.trim() || (hasOwn3d
