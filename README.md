@@ -1,8 +1,46 @@
 # rc3d-server
 
-O servidor 3D/AR da Reality Concept. Qualquer site (o nosso, WooCommerce, Squarespace, um site feito à mão) liga-se a ele com uma linha de código e passa a ter visualizador 3D e AR.
+> 🇵🇹 O servidor 3D/AR da Reality Concept 3D. A documentação de operação, em português, começa em [Como funciona](#como-funciona).
 
-Está na Vercel em **https://ar.realityconcept3d.com**.
+**Live:** [ar.realityconcept3d.com](https://ar.realityconcept3d.com/?modelo=atelier). Open it on a phone and tap the AR button to place the chair in your room.
+
+rc3d-server is the 3D and augmented reality (AR) backend of [Reality Concept 3D](https://www.realityconcept3d.com), a startup from Porto that brings furniture stores' products into 3D and AR. Any store website (WooCommerce, Shopify, Squarespace or hand-made) gets a 3D viewer and AR by pasting **one line of code**:
+
+```html
+<script src="https://ar.realityconcept3d.com/widget.js" defer></script>
+<button class="rc3d-btn" data-model="atelier">View in 3D</button>
+```
+
+## Highlights
+
+- **No database, no backend to run.** The model registry is JSON files in Git. A push deploys on Vercel, and tests run before every deploy. If they fail, nothing ships.
+- **Safe by design.** The viewer only loads registered model ids, never an arbitrary URL. The QR endpoint only encodes `https` links to our own domains, so it can't be used as a free QR generator.
+- **AR at real size.** Google model-viewer opens WebXR, Android Scene Viewer or iPhone Quick Look with `ar-scale="fixed"`. Furniture can't be stretched.
+- **Private store models.** Each store's models get unguessable random ids and are left out of every public list.
+- **Model pipeline (`tools/`).** A Node CLI takes a store's `.glb`:
+  - removes stray ground planes;
+  - keeps files under 9 MB at full quality and compresses larger ones (2048 px textures, Draco geometry);
+  - measures the real dimensions to check against the product page;
+  - creates the store's demo page;
+  - prepares an email draft through the Zoho Mail API. Drafts are never sent automatically.
+
+## Tech stack
+
+- Vanilla JavaScript (ES modules), no framework
+- Google model-viewer 3.4
+- Vercel static hosting and one serverless function (`api/qr.js`, QR codes as SVG)
+- Node's built-in test runner (`node --test`)
+- glTF Transform for model optimisation
+
+## Run it
+
+```bash
+npm install
+npm test          # tests
+npm run build     # tests + dist/ (only the public files)
+```
+
+---
 
 ## Como funciona
 
@@ -39,6 +77,8 @@ Está na Vercel em **https://ar.realityconcept3d.com**.
 | `resolve.js` | A regra "que id dá que modelo". Usado pelo visualizador e pelos testes. |
 | `models.json` | Modelos públicos (demonstrações do site). |
 | `m/<id>.json` + `m/<id>.glb` | Modelos privados (peças das lojas). Não aparecem em nenhuma lista. |
+| `d/<token>.json` | Demos das lojas, lidas pelas páginas `/demo/<token>` do site. |
+| `tools/` | Ferramentas locais: do `.glb` da loja até à demo e ao rascunho de email (ver `tools/README.md`). |
 | `api/qr.js` | Função da Vercel que desenha o QR em SVG. |
 | `scripts/build.mjs` | Copia para `dist/` só o que deve ser público. |
 | `test/resolve.test.mjs` | Testes (`npm test`). Correm em cada deploy: se falharem, o deploy não acontece. |
@@ -79,13 +119,13 @@ O pop-up fecha com o X, a tecla Escape ou um clique no fundo escuro. Em sites qu
    { "src": "/m/9f3c2a7d1e8b4c6a.glb", "name": "Mesa de centro", "credit": "Modelo Reality Concept para Stylish Club" }
    ```
 3. `npm test`, commit, push. O modelo fica em `https://ar.realityconcept3d.com/?modelo=9f3c2a7d1e8b4c6a`.
-4. No site (projeto realityconcept3d na Vercel), em **Settings → Environment Variables**, a variável `RC3D_DEMOS` liga um token à loja (o token é outro valor aleatório, é o que vai no email):
+4. Criar a demo da loja em `d/<token>.json` (o token é outro valor aleatório, é o que vai no email):
    ```json
-   {"k7x2m9q4w8e1r5t3":{"store":"Stylish Club","product":"Mesa de centro","model":"9f3c2a7d1e8b4c6a"}}
+   {"store":"Stylish Club","product":"Mesa de centro","model":"9f3c2a7d1e8b4c6a"}
    ```
-   Fazer redeploy do site. A demo fica em `https://realityconcept3d.com/demo/k7x2m9q4w8e1r5t3`. Um token errado dá 404.
+   Commit e push. A demo fica em `https://realityconcept3d.com/demo/<token>`. Um token errado dá 404. A ferramenta `tools/rc3d.mjs` faz os passos 1 a 4 sozinha (ver `tools/README.md`).
 
-**Atenção:** este repo é privado, mas os ficheiros publicados não são secretos: quem tiver o id consegue abrir o modelo. A privacidade vem de ids aleatórios e de não haver lista. Nunca pôr ids privados em `models.json`.
+**Atenção:** os ficheiros publicados não são secretos: quem tiver o id consegue abrir o modelo. A privacidade vem de ids aleatórios e de não haver nenhuma lista. Nunca pôr ids privados em `models.json`.
 
 ## Desativar um modelo
 
