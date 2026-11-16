@@ -8,6 +8,10 @@
     "@gltf-transform/core": "^4.5.1",
     "@gltf-transform/extensions": "^4.5.1",
     "@gltf-transform/functions": "^4.5.1",
-    "draco3dgltf": "^1.5.9"
+    "@google/model-viewer": "^4.4.0",
+    "draco3dgltf": "^1.5.9",
+    "gifenc": "^1.0.3",
+    "playwright": "^1.65.0",
+    "sharp": "^0.35.5"
   }
 }

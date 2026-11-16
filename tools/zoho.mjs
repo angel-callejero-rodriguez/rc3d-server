@@ -63,13 +63,27 @@ export async function setup(dir) {
   console.log(`✔ Zoho ligada (conta de ${env.ZOHO_FROM}). Já podes correr: node rc3d.mjs drafts <leads.csv>`);
 }
 
-export async function createDraft(dir, { to, subject, html }) {
+// Carrega uma imagem para usar dentro do texto do email (inline). Devolve { url, storeName, attachmentPath, attachmentName }.
+export async function uploadInline(dir, filePath, fileName) {
+  const env = readEnv(dir);
+  if (!env.ZOHO_REFRESH_TOKEN || !env.ZOHO_ACCOUNT_ID) throw new Error("Zoho ainda não ligada: corre primeiro node rc3d.mjs zoho-setup");
+  const params = new URLSearchParams({ fileName, isInline: "true" });
+  const response = await fetch(`${MAIL}/api/accounts/${env.ZOHO_ACCOUNT_ID}/messages/attachments?${params}`, {
+    method: "POST",
+    headers: { Authorization: `Zoho-oauthtoken ${await accessToken(env)}`, "Content-Type": "application/octet-stream", Accept: "application/json" },
+    body: readFileSync(filePath),
+  });
+  const body = await json(response, "carregar imagem");
+  return Array.isArray(body.data) ? body.data[0] : body.data;
+}
+
+export async function createDraft(dir, { to, subject, html, attachments }) {
   const env = readEnv(dir);
   if (!env.ZOHO_REFRESH_TOKEN || !env.ZOHO_ACCOUNT_ID) throw new Error("Zoho ainda não ligada: corre primeiro node rc3d.mjs zoho-setup");
   const response = await fetch(`${MAIL}/api/accounts/${env.ZOHO_ACCOUNT_ID}/messages`, {
     method: "POST",
     headers: { Authorization: `Zoho-oauthtoken ${await accessToken(env)}`, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ mode: "draft", fromAddress: env.ZOHO_FROM, toAddress: to, subject, content: html, mailFormat: "html" }),
+    body: JSON.stringify({ mode: "draft", fromAddress: env.ZOHO_FROM, toAddress: to, subject, content: html, mailFormat: "html", ...(attachments ? { attachments } : {}) }),
   });
   await json(response, "criar rascunho");
 }
