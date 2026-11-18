@@ -24,7 +24,9 @@ export async function stage({ url, glb, target, bg = "#fff", btnPos = "bottom", 
         const cs = getComputedStyle(el);
         if (cs.position !== "fixed" && cs.position !== "sticky") continue;
         const r = el.getBoundingClientRect();
-        if ((/cookie|consent/i.test(el.textContent || "") && r.height < innerHeight * 0.9) || r.top > innerHeight - 120) el.style.display = "none";
+        const txt = el.textContent || "";
+        // aviso de cookies: caixa pequena, ou camada de ecrã inteiro que só tem o aviso (pouco texto)
+        if ((/cookie|consent/i.test(txt) && (r.height < innerHeight * 0.9 || txt.length < 2000)) || r.top > innerHeight - 120) el.style.display = "none";
       }
       // avisos dentro de shadow DOM (ex.: WPConsent): esconde o elemento que os aloja
       for (const host of document.querySelectorAll("body *")) {
