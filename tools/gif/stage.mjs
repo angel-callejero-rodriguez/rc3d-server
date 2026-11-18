@@ -16,13 +16,23 @@ export async function stage({ url, glb, target, bg = "#fff", btnPos = "bottom", 
   await p.waitForTimeout(5000);
   await p.addScriptTag({ content: fs.readFileSync(MV, "utf8") });
   await p.evaluate(({ target, bg, btnPos, toneMapping, exposure }) => {
-    // tira avisos de cookies, chats e botões flutuantes que tapam a página
-    for (const el of document.querySelectorAll("body *")) {
-      const cs = getComputedStyle(el);
-      if (cs.position !== "fixed") continue;
-      const r = el.getBoundingClientRect();
-      if ((/cookie|consent/i.test(el.textContent || "") && r.height < innerHeight * 0.9) || r.top > innerHeight - 120) el.style.display = "none";
-    }
+    // tira avisos de cookies, chats e botões flutuantes que tapam a página.
+    // Repete-se durante a gravação, porque alguns avisos só aparecem segundos depois de a página carregar.
+    const hideOverlays = () => {
+      for (const el of document.querySelectorAll("body *")) {
+        if (el.dataset.rc3d) continue;
+        const cs = getComputedStyle(el);
+        if (cs.position !== "fixed" && cs.position !== "sticky") continue;
+        const r = el.getBoundingClientRect();
+        if ((/cookie|consent/i.test(el.textContent || "") && r.height < innerHeight * 0.9) || r.top > innerHeight - 120) el.style.display = "none";
+      }
+      // avisos dentro de shadow DOM (ex.: WPConsent): esconde o elemento que os aloja
+      for (const host of document.querySelectorAll("body *")) {
+        if (host.shadowRoot && /cookie|consent/i.test(host.id + " " + host.className + " " + host.shadowRoot.textContent)) host.style.display = "none";
+      }
+    };
+    hideOverlays();
+    setInterval(hideOverlays, 250);
     const el = document.querySelector(target);
     if (!el) throw new Error(`não encontrei ${target} na página`);
     const r = el.getBoundingClientRect();
@@ -43,6 +53,7 @@ export async function stage({ url, glb, target, bg = "#fff", btnPos = "bottom", 
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>Ver em 3D</div>`;
     document.body.appendChild(box);
     const cur = document.createElement("div");
+    cur.dataset.rc3d = "1"; // o cursor é nosso: a limpeza de avisos não lhe toca
     cur.style.cssText = "position:fixed;left:0;top:0;z-index:100000;pointer-events:none;opacity:0;width:28px;height:28px";
     document.body.appendChild(cur);
     const arrow = `<svg width="24" height="28" viewBox="0 0 24 28"><path d="M2 2v20l5.5-5 3.5 8 3.5-1.5-3.5-8H18z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
